@@ -9,6 +9,28 @@ class EmployeeRepositoryImpl(EmployeeRepository):
     def __init__(self, session: Session):
         self.session = session
 
+    def create_employee(self, employee_data: dict):
+
+        employee_model = EmployeeModel(
+            name = employee_data["name"],
+            email= employee_data["email"],
+            phone_number= employee_data["phone_number"],
+            position= employee_data["position"]
+        )
+        
+        self.session.add(employee_model)
+        self.session.commit()
+        self.session.refresh(employee_model)
+
+    
+        return Employee(
+            id = employee_model.id,
+            name= employee_model.name,
+            email= employee_model.email,
+            phone_number= employee_model.phone_number,
+            position= employee_model.position
+        )
+
     def get_employee(self, employee_id: int):
         query = self.session.query(EmployeeModel).filter(EmployeeModel.id == employee_id).first()
 
@@ -43,35 +65,6 @@ class EmployeeRepositoryImpl(EmployeeRepository):
 
         return []
         
-    def create_employee(self, employee_data: dict):
-
-        employee = Employee(
-            name = employee_data["name"],
-            email= employee_data["email"],
-            phone_number= employee_data["phone_number"],
-            position= employee_data["position"]
-
-        )
-
-        employee_model = EmployeeModel(
-            name = employee.name,
-            email = employee.email,
-            phone_number = employee.phone_number,
-            position = employee.position,
-        )
-        
-        self.session.add(employee_model)
-        self.session.commit()
-        self.session.refresh(employee_model)
-
-    
-        return Employee(
-            id = employee_model.id,
-            name= employee_model.name,
-            email= employee_model.email,
-            phone_number= employee_model.phone_number,
-            position= employee_model.position
-        )
     
     def update_employee(self, employee_id: int, employee_data: dict):
 
@@ -101,4 +94,11 @@ class EmployeeRepositoryImpl(EmployeeRepository):
         return None
 
     def delete_employee(self, employee_id: int):
-        pass
+
+        query = self.session.query(EmployeeModel).filter(EmployeeModel.id == employee_id).first()
+
+        if query is not None:
+            self.session.delete(query)
+            self.session.commit()
+        
+        return None
