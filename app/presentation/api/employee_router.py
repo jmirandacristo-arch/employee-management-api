@@ -24,19 +24,12 @@ def create_use_case():
 # Create Employee Endpoint
 @router.post("/employee", response_model= EmployeeResponse)
 def create(employee_data: EmployeeCreate, use_case: CreateEmployee = Depends(create_use_case)):
-    return use_case.execute(employee_data.model_dump())
+    try:
+       return use_case.execute(employee_data.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-# Get Employee Endpoint
-def get_use_case():
-    session = SessionLocal()
-    repository = EmployeeRepositoryImpl(session)
-    return GetEmployee(repository= repository)
-
-# Get Employee Endpoint
-@router.get("/{employee_id}", response_model= EmployeeResponse)
-def get(employee_id: int, use_case: GetEmployee = Depends(get_use_case)):
-    return use_case.execute(employee_id)
 
 
 # Get All Employees
@@ -51,6 +44,25 @@ def get_all(use_case: GetAllEmployees = Depends(get_all_use_case)):
     return use_case.execute()
 
 
+
+
+# Get Employee Endpoint
+def get_use_case():
+    session = SessionLocal()
+    repository = EmployeeRepositoryImpl(session)
+    return GetEmployee(repository= repository)
+
+# Get Employee Endpoint
+@router.get("/{employee_id}", response_model= EmployeeResponse)
+def get(employee_id: int, use_case: GetEmployee = Depends(get_use_case)):
+    try:
+        return use_case.execute(employee_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+        
+       
+    
+
 # Update Employee 
 def update_use_case():
     session = SessionLocal()
@@ -60,7 +72,13 @@ def update_use_case():
 # Update Employee Endpoint
 @router.put("/{employee_id}", response_model= EmployeeResponse)
 def update(employee_id: int, employee_data: EmployeeUpdate, use_case: UpdateEmployee = Depends(update_use_case)):
-    return use_case.execute(employee_id, employee_data.model_dump())
+
+    try:
+       return use_case.execute(employee_id, employee_data.model_dump(exclude_none=True))
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+
 
 
 # Delete Employee
@@ -70,9 +88,15 @@ def delete_use_case():
     return DeleteEmployee(repository=repository)
 
 # Delete Employee Endpoint
-@router.delete("/{employee_id}", response_model= EmployeeResponse)
+@router.delete("/{employee_id}")
 def delete(employee_id: int, use_case: DeleteEmployee = Depends(delete_use_case)):
-    return use_case.execute(employee_id)
+
+    try:
+        use_case.execute(employee_id)
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
 
 
 
